@@ -40,15 +40,17 @@ const main = async () => {
 
   const RedisStore = connectRedis(session);
 
-  app.use(cors({
-    credentials: true,
-    origin: 'http://localhost:3000'
-  }))
+  app.use(
+    cors({
+      credentials: true,
+      origin: "https://developerquiz.herokuapp.com",
+    })
+  );
 
   app.use(
     session({
       store: new RedisStore({
-        client: redis as any,
+        client: redis,
       }),
       name: "qid",
       secret: "aslkdfjoiq12312",
@@ -62,9 +64,18 @@ const main = async () => {
     })
   );
 
+  redis.on("error", (error: any) => {
+    console.log("Redis connection error", error);
+    process.exit(1);
+  });
+
+  process.on("exit", function () {
+    console.log("Exiting...listener count", redis.listenerCount("error"));
+  });
+
   apolloServer.applyMiddleware({ app, cors: false });
 
-  app.listen(4000, () => {
+  app.listen( {port: process.env.PORT || 4000 }, () => {
     console.log("server started on http://localhost:4000/graphql");
   })
 };
